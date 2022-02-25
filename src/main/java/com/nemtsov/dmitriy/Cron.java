@@ -7,7 +7,7 @@ public class Cron {
   String cronSeconds;
   String cronMinutes;
   String cronHours;
-  String cronDaysOfMonth;
+  String cronDayOfMonth;
   String cronMonths;
   String cronDayOfWeek;
 
@@ -15,9 +15,33 @@ public class Cron {
     cronSeconds = findValue(dataSorter.getSeconds(), size);
     cronMinutes = findValue(dataSorter.getMinutes(), size);
     cronHours = findValue(dataSorter.getHours(), size);
-    cronDaysOfMonth = findValue(dataSorter.getDaysOfMonth(), size);
+    cronDayOfMonth = findValue(dataSorter.getDaysOfMonth(), size);
     cronMonths = findValue(dataSorter.getMonths(), size);
     cronDayOfWeek = dataSorter.getDayOfWeek();
+  }
+
+  public String getCronSeconds() {
+    return cronSeconds;
+  }
+
+  public String getCronMinutes() {
+    return cronMinutes;
+  }
+
+  public String getCronHours() {
+    return cronHours;
+  }
+
+  public String getCronDayOfMonth() {
+    return cronDayOfMonth;
+  }
+
+  public String getCronMonths() {
+    return cronMonths;
+  }
+
+  public String getCronDayOfWeek() {
+    return cronDayOfWeek;
   }
 
   private String findValue(Set<Integer> input, int size) {
@@ -54,6 +78,6 @@ public class Cron {
 
   @Override
   public String toString() {
-    return String.join(" ", cronSeconds, cronMinutes, cronHours, cronDaysOfMonth, cronMonths, cronDayOfWeek);
+    return String.join(" ", cronSeconds, cronMinutes, cronHours, cronDayOfMonth, cronMonths, cronDayOfWeek);
   }
 }

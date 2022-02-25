@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.scheduling.support.CronExpression;
 
 public class DatesToCronConverterImpl implements DatesToCronConverter {
@@ -55,13 +57,12 @@ public class DatesToCronConverterImpl implements DatesToCronConverter {
 
     DataSorter dataSorter = new DataSorter(dates);
 
-    Cron baseCron = new Cron(dataSorter, dates.size());
+    Cron cron = new Cron(dataSorter, dates.size());
 
-    String result = baseCron.toString();
+    String result = cron.toString();
 
     if (checkResult(result, dates)) {
-
-      return getImprovedResult(baseCron, dates);
+      return getImprovedResult(cron, dates);
     } else {
       throw new DatesToCronConvertException();
     }
@@ -69,9 +70,15 @@ public class DatesToCronConverterImpl implements DatesToCronConverter {
 
   private String getImprovedResult(Cron cron, List<LocalDateTime> dates) {
     String improvedResult = cron.toString();
-    String[] resultToArray = cron.toString().split(" ");
+    List<String> times = Stream.of(
+            cron.getCronSeconds(),
+            cron.getCronMinutes(),
+            cron.getCronHours(),
+            cron.getCronDayOfMonth(),
+            cron.getCronMonths())
+            .collect(Collectors.toList());
 
-    for (String s : resultToArray) {
+    for (String s : times) {
       if (s.contains(",")) {
         Integer[] numbers = Arrays.stream(s.split(",")).mapToInt(Integer::parseInt).boxed().toArray(Integer[]::new);
         Set<Integer> partOfTimes = new TreeSet<>(Arrays.asList(numbers));
