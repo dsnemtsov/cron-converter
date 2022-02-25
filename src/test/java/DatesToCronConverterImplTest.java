@@ -55,9 +55,37 @@ class DatesToCronConverterImplTest {
             "2022-01-26T09:30:00"
     ).collect(Collectors.toList());
 
+    List<String> list3 = Stream.of(
+            "2022-01-01T00:00",
+            "2022-02-01T00:00",
+            "2022-03-01T00:00",
+            "2022-04-01T00:00",
+            "2022-05-01T00:00",
+            "2022-06-01T00:00",
+            "2022-07-01T00:00",
+            "2022-08-01T00:00",
+            "2022-09-01T00:00",
+            "2022-10-01T00:00"
+    ).collect(Collectors.toList());
+
+    List<String> list4 = Stream.of(
+            "2022-01-01T00:00",
+            "2022-01-01T00:00:10",
+            "2022-01-01T00:00:20",
+            "2022-01-01T00:00:30",
+            "2022-01-01T00:00:40",
+            "2022-01-01T00:00:50",
+            "2022-01-01T00:01:00",
+            "2022-01-01T00:01:10",
+            "2022-01-01T00:01:20",
+            "2022-01-01T00:01:30"
+    ).collect(Collectors.toList());
+
     assertAll(
-            () -> assertEquals("0 * * * * MON", converter.convert(list1)),
-            () -> assertEquals("0 0/30 8-9 * * *", converter.convert(list2))
+            () -> assertEquals("0 * * 24 1 MON", converter.convert(list1)),
+            () -> assertEquals("0 */30 8,9 * 1 *", converter.convert(list2)),
+            () -> assertEquals("0 0 0 1 * *", converter.convert(list3)),
+            () -> assertEquals("*/10 * 0 1 1 SAT", converter.convert(list4))
     );
   }
 

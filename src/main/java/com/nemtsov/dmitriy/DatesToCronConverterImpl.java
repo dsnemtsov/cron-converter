@@ -2,30 +2,17 @@ package com.nemtsov.dmitriy;
 
 import com.digdes.school.DatesToCronConvertException;
 import com.digdes.school.DatesToCronConverter;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.springframework.scheduling.support.CronExpression;
 
 public class DatesToCronConverterImpl implements DatesToCronConverter {
-  private static final List<String> expressions = new ArrayList<>();
-
-  static {
-    File cron = new File("src\\main\\resources\\cron.txt");
-    try (BufferedReader br = new BufferedReader(new FileReader(cron))) {
-      while (br.ready()) {
-        expressions.add(br.readLine());
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
 
   @Override
   public String convert(List<String> list) throws DatesToCronConvertException {
@@ -50,7 +37,7 @@ public class DatesToCronConverterImpl implements DatesToCronConverter {
               String.valueOf(dates.get(0).getMonthValue()),
               dates.get(0).getDayOfWeek().toString().substring(0, 3));
     }
-    return findExpression(dates);
+    return findCronExpression(dates);
   }
 
   @Override
@@ -62,35 +49,58 @@ public class DatesToCronConverterImpl implements DatesToCronConverter {
             "GitHub: https://github.com/dsnemtsov/cron-converter");
   }
 
-  private String findExpression(List<LocalDateTime> dates) throws DatesToCronConvertException {
-    int validDates = 0;
+  private String findCronExpression(List<LocalDateTime> dates) throws DatesToCronConvertException {
 
     Collections.sort(dates);
 
-    for (String expression : expressions) {
-      List<LocalDateTime> datesForExpression = new ArrayList<>();
-      CronExpression cronExpression = CronExpression.parse(expression);
+    DataSorter dataSorter = new DataSorter(dates);
 
-      for (int i = 0; i < dates.size() / 2; i++) {
-        datesForExpression.add(dates.get(i));
+    Cron baseCron = new Cron(dataSorter, dates.size());
 
-        for (int j = i + 1; j < dates.size(); j++) {
-          datesForExpression.add(cronExpression.next(datesForExpression.get(j - i - 1)));
-        }
+    String result = baseCron.toString();
 
-        for (int j = i; j < dates.size(); j++) {
-          if (dates.get(j).equals(datesForExpression.get(j - i))) {
-            validDates++;
+    if (checkResult(result, dates)) {
+
+      return getImprovedResult(baseCron, dates);
+    } else {
+      throw new DatesToCronConvertException();
+    }
+  }
+
+  private String getImprovedResult(Cron cron, List<LocalDateTime> dates) {
+    String improvedResult = cron.toString();
+    String[] resultToArray = cron.toString().split(" ");
+
+    for (String s : resultToArray) {
+      if (s.contains(",")) {
+        Integer[] numbers = Arrays.stream(s.split(",")).mapToInt(Integer::parseInt).boxed().toArray(Integer[]::new);
+        Set<Integer> partOfTimes = new TreeSet<>(Arrays.asList(numbers));
+        int period = cron.getPeriod(partOfTimes);
+        if (period != -1) {
+          String possibleResult;
+          if (period == 1) {
+            possibleResult = improvedResult.replace(s, "*");
+          } else {
+            possibleResult = improvedResult.replace(s, "*/" + period);
           }
-          if (validDates > dates.size() / 2) {
-            return expression;
+          if (checkResult(possibleResult, dates)) {
+            improvedResult = possibleResult;
           }
         }
-
-        datesForExpression.clear();
-        validDates = 0;
       }
     }
-    throw new DatesToCronConvertException();
+    return improvedResult;
+  }
+
+  private boolean checkResult(String result, List<LocalDateTime> dates) {
+    CronExpression cronExpression = CronExpression.parse(result);
+    List<LocalDateTime> cronResult = new ArrayList<>();
+
+    cronResult.add(dates.get(0));
+
+    for (int i = 1; i < dates.size(); i++) {
+      cronResult.add(cronExpression.next(cronResult.get(i - 1)));
+    }
+    return cronResult.equals(dates);
   }
 }
